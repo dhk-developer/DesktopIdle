@@ -58,14 +58,13 @@ internal sealed class DesktopIdleContext : ApplicationContext
 
         try
         {
-            if (await _activityDetector.IsEngagedActivityActiveAsync(_settings))
-            {
-                if (_ambientModeActive) ExitAmbientMode();
-                return;
-            }
-
-            var idleMs = Win32.GetIdleMilliseconds();
-
+            // Once ambient mode is active, exit should be driven only by genuine
+            // user input. Foreground-window checks are intentionally skipped here,
+            // because Show Desktop, Explorer, taskbar auto-hide and the transparent
+            // cursor-mask overlay can briefly change what Windows reports as the
+            // active/fullscreen window. On a fresh Windows session, that transient
+            // state could make the app enter ambient mode, immediately exit, then
+            // re-enter because the system is still idle.
             if (_ambientModeActive)
             {
                 if (DateTime.UtcNow > _ambientInputGraceUntilUtc
@@ -76,6 +75,17 @@ internal sealed class DesktopIdleContext : ApplicationContext
 
                 return;
             }
+
+            // These checks are only entry suppressors. They prevent ambient mode
+            // from starting while the user is watching/presenting/using an excluded
+            // app, but they should not force ambient mode to exit after it has
+            // already started.
+            if (await _activityDetector.IsEngagedActivityActiveAsync(_settings))
+            {
+                return;
+            }
+
+            var idleMs = Win32.GetIdleMilliseconds();
 
             if (idleMs >= (uint)(_settings.AmbientDelaySeconds * 1000))
             {
