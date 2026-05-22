@@ -35,7 +35,7 @@ DesktopIdle requires:
 6. Add / remove window minimisation exclusions from the list. These are apps that will not be minimised. Some generic exclusions have been set up by default.
 7. Use **Enable start with Windows** if you want it to run automatically when you log in.
 
-## Licence
+## License
 
 DesktopIdle is released under the MIT License.
 
