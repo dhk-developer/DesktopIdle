@@ -19,9 +19,7 @@ internal sealed class TaskbarController
                 return;
             }
 
-            // Watchdog behaviour: verify the state regularly, but only write to
-            // Explorer when auto-hide has actually dropped out. This avoids the
-            // old stutter problem caused by repeatedly setting taskbar state.
+
             EnsureAutoHideOn(allowBroadcastOnFailure: false);
         };
 
@@ -76,8 +74,7 @@ internal sealed class TaskbarController
                 return true;
             }
 
-            // If quiet repair did not stick, escalate. We allow immediate escalation
-            // during entry, or after repeated watchdog misses / cooldown thereafter.
+            // If quiet repair did not stick, escalate.
             var broadcastCooldownElapsed = (DateTime.UtcNow - _lastBroadcastUtc).TotalMilliseconds >= 5000;
             var shouldBroadcast = allowBroadcastOnFailure || _repairMisses >= 2 || broadcastCooldownElapsed;
 

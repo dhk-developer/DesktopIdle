@@ -58,13 +58,7 @@ internal sealed class DesktopIdleContext : ApplicationContext
 
         try
         {
-            // Once ambient mode is active, exit should be driven only by genuine
-            // user input. Foreground-window checks are intentionally skipped here,
-            // because Show Desktop, Explorer, taskbar auto-hide and the transparent
-            // cursor-mask overlay can briefly change what Windows reports as the
-            // active/fullscreen window. On a fresh Windows session, that transient
-            // state could make the app enter ambient mode, immediately exit, then
-            // re-enter because the system is still idle.
+
             if (_ambientModeActive)
             {
                 if (DateTime.UtcNow > _ambientInputGraceUntilUtc
@@ -76,10 +70,7 @@ internal sealed class DesktopIdleContext : ApplicationContext
                 return;
             }
 
-            // These checks are only entry suppressors. They prevent ambient mode
-            // from starting while the user is watching/presenting/using an excluded
-            // app, but they should not force ambient mode to exit after it has
-            // already started.
+
             if (await _activityDetector.IsEngagedActivityActiveAsync(_settings))
             {
                 return;
@@ -108,10 +99,7 @@ internal sealed class DesktopIdleContext : ApplicationContext
 
         try
         {
-            // Move the cursor away from any taskbar before doing anything else.
-            // Programmatic cursor movement can reset the Windows idle counter on
-            // some setups, so the input grace window below deliberately suppresses
-            // that synthetic movement from immediately cancelling ambient mode.
+
             CursorManager.MoveToCurrentScreenCentre();
             _ambientCursorAnchor = Cursor.Position;
             AmbientExitInputDetector.ClearKeyStateLatches();
@@ -121,16 +109,12 @@ internal sealed class DesktopIdleContext : ApplicationContext
                 _taskbarAutoHideBeforeAmbient = _taskbar.GetAutoHide();
             }
 
-            // Show the desktop first so the main ambient transition happens immediately.
-            // Taskbar auto-hide is applied afterwards and kept on by the keeper timer.
             _windows.ShowDesktopByMinimisingWindows(_settings);
             _cursorMask.Show();
 
             if (_settings.EnableTaskbarAutoHideInAmbient)
             {
-                // Let Explorer finish the Show Desktop animation first, then hide
-                // the taskbar. Applying both at exactly the same time can make the
-                // taskbar animation stutter on some Windows 11 setups.
+
                 _taskbar.StartDeferredAutoHide(175);
             }
 
@@ -159,8 +143,7 @@ internal sealed class DesktopIdleContext : ApplicationContext
             _taskbar.StopKeeper();
             _cursorMask.Hide();
 
-            // No dark overlay: restore windows in a very short staggered sequence
-            // instead of making every window pop back at the exact same instant.
+
             _windows.RestoreAmbientWindows(staggerDelayMs: 18);
             _ambientCursorAnchor = Point.Empty;
 
@@ -180,9 +163,7 @@ internal sealed class DesktopIdleContext : ApplicationContext
 
     private int GetProgrammaticInputGraceMs()
     {
-        // If moving the cursor resets the OS idle counter, the grace period must
-        // be longer than the configured fresh-input threshold. Otherwise ambient
-        // mode could immediately exit after the grace period expires.
+
         return Math.Max(_settings.AmbientInputGraceMs, _settings.InputFreshThresholdMs + 500);
     }
 

@@ -74,10 +74,7 @@ internal sealed class WindowManager
         _excludedWindowsRestoredAfterFastShowDesktop.Clear();
         _usedFastShowDesktop = false;
 
-        // Fast path: use Explorer's native "Show Desktop", but first remember only
-        // the windows that were visible beforehand. On exit we restore this captured
-        // list asynchronously instead of waiting on Shell.Application UndoMinimizeAll,
-        // which can take several seconds on some Windows 11 setups.
+
         if (TryShowDesktopFast(settings)) return;
 
         // Fallback path: preserve manual behaviour if Shell.Application is unavailable.
@@ -94,13 +91,11 @@ internal sealed class WindowManager
             }
             else
             {
-                // Very defensive fallback: should rarely be needed, but prevents users
-                // getting stuck if no windows were captured even though Shell minimize ran.
+                // Very defensive fallback: should rarely be needed.
                 TryShellCommand("UndoMinimizeAll");
             }
 
-            // Keep excluded windows visible and stable. They should already be visible,
-            // because they were restored immediately after entry, but this is harmless.
+
             foreach (var hwnd in _excludedWindowsRestoredAfterFastShowDesktop)
             {
                 RestoreWindowFast(hwnd);
@@ -126,9 +121,7 @@ internal sealed class WindowManager
     {
         try
         {
-            // Capture the exact windows we intend to bring back later. Do not cap this
-            // list with RestoreMaxWindows, because Shell MinimizeAll affects all visible
-            // windows. The cap is only used by the manual fallback path.
+
             var windowsToRestore = GetRestoreableWindows(settings, respectWindowExclusions: true, maxWindows: 500).ToList();
             var excludedWindows = GetVisibleExcludedWindows(settings).ToList();
 
@@ -174,9 +167,7 @@ internal sealed class WindowManager
 
     private void RestoreCapturedWindowsFast(int staggerDelayMs = 0)
     {
-        // Reverse order approximates the old behaviour and tends to return the last
-        // active windows near the front. A tiny optional stagger makes the exit feel
-        // less abrupt without adding a dark overlay or making the restore feel slow.
+
         var delay = Math.Clamp(staggerDelayMs, 0, 50);
 
         for (var i = _ambientWindows.Count - 1; i >= 0; i--)

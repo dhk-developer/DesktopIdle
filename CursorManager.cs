@@ -16,8 +16,7 @@ internal static class CursorManager
         }
         catch
         {
-            // Cursor movement is a comfort fix, not a critical path. Never block
-            // ambient mode if Windows refuses to move the cursor.
+            // Cursor movement is a comfort fix, not a critical path. 
         }
     }
 }
